@@ -1,30 +1,20 @@
-/**
- * @file streams-i2s-serial.ino
- * @author Phil Schatzmann
- * @brief see https://github.com/pschatzmann/arduino-audio-tools/blob/main/examples/examples-stream/streams-i2s-serial/README.md
- * 
- * @author Phil Schatzmann
- * @copyright GPLv3
- */
+#include "Arduino.h"
+#include "SoundData.h"
 
-#include <Arduino.h>
-#include <driver/dac.h>
+const int speakerPin = 25; // GPIO25用于扬声器
 
-
-// Arduino Setup
-void setup(void) {
-    dac_output_enable(DAC_CHANNEL_1);
+void setup() {
+    // 初始化GPIO25为PWM输出
+    ledcSetup(0, 16000, 8); // 使用通道0, 16 kHz PWM频率, 8位分辨率
+    ledcAttachPin(speakerPin, 0); // 将GPIO25连接到通道0
 }
 
 void loop() {
-    // 产生一个简单的500Hz方波，持续时间1秒
-    for (int i = 0; i < 500; i++) {
-        // 将DAC输出设为高
-        dac_output_voltage(DAC_CHANNEL_1, 255);
-        delayMicroseconds(1000); // 延时1ms
-        // 将DAC输出设为低
-        dac_output_voltage(DAC_CHANNEL_1, 0);
-        delayMicroseconds(1000); // 延时1ms
+    // 遍历并播放音频样本数组
+    for (unsigned char i : sample) {
+        ledcWrite(0, i); // 直接将样本值写入PWM
+        delayMicroseconds(62); // 根据16kHz采样率等待
     }
-    delay(1000); // 延时1秒
+
+    // 可能需要在这里添加一些逻辑来重复播放或停止
 }
