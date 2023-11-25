@@ -1,20 +1,54 @@
 #include <Arduino.h>
-#include <driver/dac.h>
-#include "SoundData.h"
+#include <SPIFFS.h>
+#include <SPI.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <SD.h>
+#include <SD_MMC.h>
+#include <FFat.h>
+#include "Audio.h"
+
+// I2S Connections
+#define I2S_DOUT      27
+#define I2S_BCLK      26
+#define I2S_LRC       25
+
+// Create Audio object
+Audio audio;
+
+String ssid = "cwllll";
+String password = "18650807813";
 
 void setup() {
-    // 启用DAC通道
-    dac_output_enable(DAC_CHANNEL_1);
+    Serial.begin(115200);
+    if (!SPIFFS.begin(true)) {
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return;
+    }
+
+    WiFi.disconnect();
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid.c_str(), password.c_str());
+    Serial.println("connecting to WIFI cwllll");
+    while (WiFi.status() != WL_CONNECTED) {
+        Serial.print(".");
+        delay(1000);
+    }
+    Serial.println("connected!");
+
+    // Setup I2S
+    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+
+    // Set Volume
+    audio.setVolume(21);
+    // Open music file
+    audio.connecttohost("https://sl-sycdn.kuwo.cn/0f2f12f6d67413b7ed17979a447b4494/656190c5/resource/n2/27/46/3934587489.mp3");
 }
 
 void loop() {
-    // 遍历音频样本数组
-    for (unsigned char i : sample) {
-        // 输出当前样本值到DAC
-        dac_output_voltage(DAC_CHANNEL_1, i);
-        // 根据音频采样率延时（例如，16000Hz采样率对应62.5微秒）
-        delayMicroseconds(62);
+    if (!audio.isRunning()) {
+        delay(1000);
+        audio.connecttohost("https://sl-sycdn.kuwo.cn/0f2f12f6d67413b7ed17979a447b4494/656190c5/resource/n2/27/46/3934587489.mp3");
     }
-    // 在音频播放结束后，可以加入一段延时
-    delay(1000);
+    audio.loop();
 }
