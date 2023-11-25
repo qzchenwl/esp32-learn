@@ -42,13 +42,13 @@ void setup() {
     // Set Volume
     audio.setVolume(21);
     // Open music file
-    audio.connecttohost("https://sl-sycdn.kuwo.cn/0f2f12f6d67413b7ed17979a447b4494/656190c5/resource/n2/27/46/3934587489.mp3");
+    audio.connecttoFS(SPIFFS, "alloy.wav");
 }
 
 void loop() {
     if (!audio.isRunning()) {
         delay(1000);
-        audio.connecttohost("https://sl-sycdn.kuwo.cn/0f2f12f6d67413b7ed17979a447b4494/656190c5/resource/n2/27/46/3934587489.mp3");
+        audio.connecttoFS(SPIFFS, "alloy.wav");
     }
     audio.loop();
 }
