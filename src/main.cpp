@@ -70,8 +70,8 @@ void i2s_setpin() {
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 // Define SDA and SCL pins
-#define OLED_SDA    33
-#define OLED_SCL    32
+#define OLED_SDA    32
+#define OLED_SCL    33
 #define OLED_ADDR   0x3C // OLED I2C address
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
@@ -109,7 +109,18 @@ void setup() {
     delay(500);
 }
 
+const int DRAW_INTERVAL = 100;  // 绘制波形的时间间隔（毫秒）
+const int TIME_RANGE = 5000; // 展示的时间范围（毫秒）
+const int PIXELS_NEEDED = SCREEN_WIDTH * DRAW_INTERVAL / TIME_RANGE;
+
+
+unsigned long lastDrawTime = 0; // 上次绘制波形的时间
+int16_t displayBuffer[SCREEN_WIDTH] = {0};
 void loop() {
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastDrawTime < DRAW_INTERVAL) {
+        return;
+    }
 
     // False print statements to "lock range" on serial plotter display
     // Change rangelimit value to adjust "sensitivity"
@@ -123,25 +134,31 @@ void loop() {
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, &sBuffer, bufferLen, &bytesIn, portMAX_DELAY);
 
-    if (result == ESP_OK)
-    {
-        // Read I2S data buffer
-        int16_t samples_read = bytesIn / 8;
+    display.clearDisplay();
+
+    if (result == ESP_OK) {
+        int16_t samples_read = bytesIn / sizeof(int16_t);
         if (samples_read > 0) {
-            float mean = 0;
-            for (int16_t i = 0; i < samples_read; ++i) {
-                mean += (sBuffer[i]);
+            display.setCursor(0,0);
+            // 绘制波形
+            int16_t newPixels[PIXELS_NEEDED];
+            for (int i = 0; i < samples_read - 1; ++i) {
+                // 将音频样本值映射到OLED屏幕的高度
+                int y = map(sBuffer[i], -32768, 32767, 0, SCREEN_HEIGHT);
+                // 计算x坐标，根据需要调整
+                int x = map(i, 0, samples_read - 1, 0, PIXELS_NEEDED);
+                newPixels[x] = y;
+                // 在OLED屏幕上绘制线条
+//                display.drawLine(x1, y1, x2, y2, SSD1306_WHITE);
             }
-
-            // Average the data reading
-            mean /= samples_read;
-
-            // Print to serial plotter
-            Serial.println(mean);
+            memmove(displayBuffer, displayBuffer + PIXELS_NEEDED, (SCREEN_WIDTH - PIXELS_NEEDED) * sizeof(int16_t));
+            memcpy(displayBuffer + SCREEN_WIDTH - PIXELS_NEEDED, newPixels, PIXELS_NEEDED * sizeof(int16_t));
+            for (int i = 0; i < SCREEN_WIDTH - 1; ++i) {
+                display.drawLine(i, displayBuffer[i], i + 1, displayBuffer[i + 1], SSD1306_WHITE);
+            }
         }
     }
 
-    display.clearDisplay();
     display.setCursor(0,0);
 
     // Get the current time
