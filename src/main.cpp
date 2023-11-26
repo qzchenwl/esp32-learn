@@ -1,54 +1,164 @@
+/*
+  ESP32 I2S Microphone Sample
+  esp32-i2s-mic-sample.ino
+  Sample sound from I2S microphone, display on Serial Plotter
+  Requires INMP441 I2S microphone
+
+  DroneBot Workshop 2022
+  https://dronebotworkshop.com
+*/
 #include <Arduino.h>
-#include <SPIFFS.h>
+// Include I2S driver
+#include <driver/i2s.h>
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <SD.h>
 #include <SD_MMC.h>
+#include <SPIFFS.h>
 #include <FFat.h>
-#include "Audio.h"
 
-// I2S Connections
-#define I2S_DOUT      27
-#define I2S_BCLK      26
-#define I2S_LRC       25
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <TimeLib.h>
 
-// Create Audio object
-Audio audio;
 
-String ssid = "cwllll";
-String password = "18650807813";
+// Connections to INMP441 I2S microphone
+#define I2S_WS 26
+#define I2S_SD 25
+#define I2S_SCK 27
+
+// Use I2S Processor 0
+#define I2S_PORT I2S_NUM_0
+
+// Define input buffer length
+#define bufferLen 64
+int16_t sBuffer[bufferLen];
+
+void i2s_install() {
+    // Set up I2S Processor configuration
+    const i2s_config_t i2s_config = {
+            .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
+            .sample_rate = 44100,
+            .bits_per_sample = i2s_bits_per_sample_t(16),
+            .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+            .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
+            .intr_alloc_flags = 0,
+            .dma_buf_count = 8,
+            .dma_buf_len = bufferLen,
+            .use_apll = false
+    };
+
+    i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
+}
+
+void i2s_setpin() {
+    // Set I2S pin configuration
+    const i2s_pin_config_t pin_config = {
+            .bck_io_num = I2S_SCK,
+            .ws_io_num = I2S_WS,
+            .data_out_num = -1,
+            .data_in_num = I2S_SD
+    };
+
+    i2s_set_pin(I2S_PORT, &pin_config);
+}
+
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Define SDA and SCL pins
+#define OLED_SDA    33
+#define OLED_SCL    32
+#define OLED_ADDR   0x3C // OLED I2C address
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 void setup() {
-    Serial.begin(115200);
-    if (!SPIFFS.begin(true)) {
-        Serial.println("An Error has occurred while mounting SPIFFS");
-        return;
+
+    // Set up Serial Monitor
+    Serial.begin(9600);
+    Serial.println(" ");
+
+    Wire.begin(OLED_SDA, OLED_SCL);
+
+    if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+        Serial.println("SSD1306 allocation failed");
+        for(;;); // Infinite loop
     }
 
-    WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid.c_str(), password.c_str());
-    Serial.println("connecting to WIFI cwllll");
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.print(".");
-        delay(1000);
-    }
-    Serial.println("connected!");
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
 
-    // Setup I2S
-    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+    // Initialize the built-in clock
+    setTime(14, 0, 0, 1, 1, 2021); // Set initial time to 14:00:00, January 1, 2021
 
-    // Set Volume
-    audio.setVolume(21);
-    // Open music file
-    audio.connecttoFS(SPIFFS, "alloy.wav");
+
+    delay(1000);
+
+    // Set up I2S
+    i2s_install();
+    i2s_setpin();
+    i2s_start(I2S_PORT);
+
+
+    delay(500);
 }
 
 void loop() {
-    if (!audio.isRunning()) {
-        delay(1000);
-        audio.connecttoFS(SPIFFS, "alloy.wav");
+
+    // False print statements to "lock range" on serial plotter display
+    // Change rangelimit value to adjust "sensitivity"
+    int rangelimit = 3000;
+    Serial.print(rangelimit * -1);
+    Serial.print(" ");
+    Serial.print(rangelimit);
+    Serial.print(" ");
+
+    // Get I2S data and place in data buffer
+    size_t bytesIn = 0;
+    esp_err_t result = i2s_read(I2S_PORT, &sBuffer, bufferLen, &bytesIn, portMAX_DELAY);
+
+    if (result == ESP_OK)
+    {
+        // Read I2S data buffer
+        int16_t samples_read = bytesIn / 8;
+        if (samples_read > 0) {
+            float mean = 0;
+            for (int16_t i = 0; i < samples_read; ++i) {
+                mean += (sBuffer[i]);
+            }
+
+            // Average the data reading
+            mean /= samples_read;
+
+            // Print to serial plotter
+            Serial.println(mean);
+        }
     }
-    audio.loop();
+
+    display.clearDisplay();
+    display.setCursor(0,0);
+
+    // Get the current time
+    int hours = hour();
+    int minutes = minute();
+    int seconds = second();
+
+    // Format and display the time
+    display.print("Time: ");
+    if (hours < 10) display.print('0');
+    display.print(hours);
+    display.print(':');
+    if (minutes < 10) display.print('0');
+    display.print(minutes);
+    display.print(':');
+    if (seconds < 10) display.print('0');
+    display.print(seconds);
+
+    display.display();
 }
