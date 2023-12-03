@@ -1,3 +1,0 @@
-CompileFlags:
-  Remove: [-mlongcalls, -free, -mtext-section-literals, -fipa-pta]
-  Add: [-ferror-limit=0]
