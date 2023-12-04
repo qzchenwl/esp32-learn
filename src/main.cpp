@@ -17,12 +17,15 @@
 #include <TFT_eSPI.h>
 #include <SPIFFS.h>
 #include <TJpg_Decoder.h>
+#include "images/jpeg272x233.h"
 
 TFT_eSPI tft = TFT_eSPI();  // 创建 TFT 对象
 
 bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap){
-    if ((x >= tft.width()) || (y >= tft.height())) return false;
-    tft.pushImage(x, y, w, h, bitmap);
+    if ((y >= tft.height())) return false;
+    tft.startWrite();
+    tft.pushImageDMA(x, y, w, h, bitmap);
+    tft.endWrite();
     return true;
 }
 
@@ -45,29 +48,14 @@ void setup() {
 
     // 尝试打开图像文件
     int time;
-    File jpgFile;
-    jpgFile = SPIFFS.open("/1.jpeg", "r");
-    if (!jpgFile) {
-        Serial.println("文件打开失败!");
-        return;
-    }
-    size_t fileSize = jpgFile.size();
-    uint8_t *jpgBuffer = (uint8_t *)malloc(fileSize);
-    if (!jpgBuffer) {
-        Serial.println("内存分配失败！");
-        jpgFile.close();
-        return;
-    }
-    jpgFile.read(jpgBuffer, fileSize);
-    jpgFile.close();
 
     time = millis();
-    TJpgDec.drawJpg(0, 0, jpgBuffer, fileSize);
+    TJpgDec.drawJpg(0, 0, test_jpeg_272x233, test_jpeg_272x233_len);
     time = millis() - time;
     Serial.printf("解码时间: %dms\n", time);
 
     time = millis();
-    TJpgDec.drawJpg(0, 0, jpgBuffer, fileSize);
+    TJpgDec.drawJpg(0, 0, test_jpeg_272x233, test_jpeg_272x233_len);
     time = millis() - time;
     Serial.printf("解码时间: %dms\n", time);
 }
