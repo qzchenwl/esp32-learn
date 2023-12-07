@@ -23,9 +23,7 @@ TFT_eSPI tft = TFT_eSPI();  // 创建 TFT 对象
 
 bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap){
     if ((y >= tft.height())) return false;
-    tft.startWrite();
-    tft.pushImageDMA(x, y, w, h, bitmap);
-    tft.endWrite();
+    tft.pushImage(x, y, w, h, bitmap);
     return true;
 }
 
