@@ -15,7 +15,7 @@ void setup_my_screen() {
 
   tft.init(); // 初始化显示器
   tft.setSwapBytes(true);
-  tft.setRotation(3); // 设置显示方向
+  tft.setRotation(1); // 设置显示方向
   tft.fillScreen(TFT_BLACK); // 清屏
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.initDMA();

@@ -20,8 +20,7 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-// 4 for flash led or 33 for normal led
-#define LED_GPIO_NUM       4
+sensor_t * camera;
 
 void setup_my_camera() {
   camera_config_t config;
@@ -76,9 +75,10 @@ void setup_my_camera() {
     return;
   }
 
-  sensor_t * s = esp_camera_sensor_get();
+  camera = esp_camera_sensor_get();
+  camera->set_vflip(camera, 1);
   // drop down frame size for higher initial frame rate
   if(config.pixel_format == PIXFORMAT_JPEG){
-    s->set_framesize(s, FRAMESIZE_QVGA);
+    camera->set_framesize(camera, FRAMESIZE_QVGA);
   }
 }

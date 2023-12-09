@@ -25,5 +25,5 @@ void loop() {
   TJpgDec.drawJpg(0, 10, fb->buf, fb->len);
   esp_camera_fb_return(fb);
   tft.setCursor(0, 0);
-  tft.printf("w:%d, h:%d, c:%d", fb->width, fb->height, count++);
+  tft.printf("w:%d h:%d c:%d", fb->width, fb->height, count++);
 }
