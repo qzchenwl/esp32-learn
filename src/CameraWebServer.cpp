@@ -1,50 +1,61 @@
-#include "esp_camera.h"
+#include <TFT_eSPI.h>
+#include <SPIFFS.h>
+#include <TJpg_Decoder.h>
+
+#include <esp_camera.h>
 #include <WiFi.h>
 
-//
-// WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
-//            Ensure ESP32 Wrover Module or other board with PSRAM is selected
-//            Partial images will be transmitted if image exceeds buffer size
-//
-//            You must select partition scheme from the board menu that has at least 3MB APP space.
-//            Face Recognition is DISABLED for ESP32 and ESP32-S2, because it takes up from 15 
-//            seconds to process single frame. Face Detection is ENABLED if PSRAM is enabled as well
+#include "images/jpeg272x233.h"
 
-// ===================
-// Select camera model
-// ===================
-//#define CAMERA_MODEL_WROVER_KIT // Has PSRAM
-//#define CAMERA_MODEL_ESP_EYE // Has PSRAM
-//#define CAMERA_MODEL_ESP32S3_EYE // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_PSRAM // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_V2_PSRAM // M5Camera version B Has PSRAM
-//#define CAMERA_MODEL_M5STACK_WIDE // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_ESP32CAM // No PSRAM
-//#define CAMERA_MODEL_M5STACK_UNITCAM // No PSRAM
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
-//#define CAMERA_MODEL_TTGO_T_JOURNAL // No PSRAM
-//#define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
-// ** Espressif Internal Boards **
-//#define CAMERA_MODEL_ESP32_CAM_BOARD
-//#define CAMERA_MODEL_ESP32S2_CAM_BOARD
-//#define CAMERA_MODEL_ESP32S3_CAM_LCD
-//#define CAMERA_MODEL_DFRobot_FireBeetle2_ESP32S3 // Has PSRAM
-//#define CAMERA_MODEL_DFRobot_Romeo_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
 
-// ===========================
-// Enter your WiFi credentials
-// ===========================
 const char* ssid = "Xiaomi";
 const char* password = "87883222";
 
 void startCameraServer();
 void setupLedFlash(int pin);
 
+TFT_eSPI tft = TFT_eSPI();  // 创建 TFT 对象
+
+bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap){
+    if ((y >= tft.height())) return false;
+    tft.pushImage(x, y, w, h, bitmap);
+    return true;
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
+
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setCallback(tft_output);
+
+  tft.init(); // 初始化显示器
+  tft.setSwapBytes(true);
+  tft.setRotation(1); // 设置显示方向
+  tft.fillScreen(TFT_BLACK); // 清屏
+  tft.initDMA();
+
+  // 初始化 SPIFFS
+  if (!SPIFFS.begin()) {
+    Serial.println("SPIFFS 初始错误!");
+    return;
+  }
+
+  // 尝试打开图像文件
+  int time;
+
+  time = millis();
+  TJpgDec.drawJpg(0, 0, test_jpeg_272x233, test_jpeg_272x233_len);
+  time = millis() - time;
+  Serial.printf("解码时间: %dms\n", time);
+
+  time = millis();
+  TJpgDec.drawJpg(0, 0, test_jpeg_272x233, test_jpeg_272x233_len);
+  time = millis() - time;
+  Serial.printf("解码时间: %dms\n", time);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -89,15 +100,7 @@ void setup() {
   } else {
     // Best option for face detection/recognition
     config.frame_size = FRAMESIZE_240X240;
-#if CONFIG_IDF_TARGET_ESP32S3
-    config.fb_count = 2;
-#endif
   }
-
-#if defined(CAMERA_MODEL_ESP_EYE)
-  pinMode(13, INPUT_PULLUP);
-  pinMode(14, INPUT_PULLUP);
-#endif
 
   // camera init
   esp_err_t err = esp_camera_init(&config);
@@ -107,30 +110,10 @@ void setup() {
   }
 
   sensor_t * s = esp_camera_sensor_get();
-  // initial sensors are flipped vertically and colors are a bit saturated
-  if (s->id.PID == OV3660_PID) {
-    s->set_vflip(s, 1); // flip it back
-    s->set_brightness(s, 1); // up the brightness just a bit
-    s->set_saturation(s, -2); // lower the saturation
-  }
   // drop down frame size for higher initial frame rate
   if(config.pixel_format == PIXFORMAT_JPEG){
     s->set_framesize(s, FRAMESIZE_QVGA);
   }
-
-#if defined(CAMERA_MODEL_M5STACK_WIDE) || defined(CAMERA_MODEL_M5STACK_ESP32CAM)
-  s->set_vflip(s, 1);
-  s->set_hmirror(s, 1);
-#endif
-
-#if defined(CAMERA_MODEL_ESP32S3_EYE)
-  s->set_vflip(s, 1);
-#endif
-
-// Setup LED FLash if LED pin is defined in camera_pins.h
-#if defined(LED_GPIO_NUM)
-  setupLedFlash(LED_GPIO_NUM);
-#endif
 
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
@@ -147,8 +130,22 @@ void setup() {
   Serial.print("Camera Ready! Use 'http://");
   Serial.print(WiFi.localIP());
   Serial.println("' to connect");
+
 }
 
 void loop() {
-  // Do nothing. Everything is done in another task by the web server
+  int time;
+
+  time = millis();
+  camera_fb_t* fb = esp_camera_fb_get();
+  time = millis() - time;
+  Serial.printf("取照片时间: %dms\n", time);
+
+
+  time = millis();
+  TJpgDec.drawJpg(0, 0, fb->buf, fb->len);
+  time = millis() - time;
+  Serial.printf("解码时间: %dms\n", time);
+
+  esp_camera_fb_return(fb);
 }
