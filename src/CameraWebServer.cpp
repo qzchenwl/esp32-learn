@@ -1,9 +1,6 @@
 #include <TFT_eSPI.h>
-#include <SPIFFS.h>
 #include <TJpg_Decoder.h>
-
 #include <esp_camera.h>
-#include <WiFi.h>
 
 #include "images/jpeg272x233.h"
 
@@ -12,9 +9,6 @@
 
 const char* ssid = "Xiaomi";
 const char* password = "87883222";
-
-void startCameraServer();
-void setupLedFlash(int pin);
 
 TFT_eSPI tft = TFT_eSPI();  // 创建 TFT 对象
 
@@ -114,39 +108,28 @@ void setup() {
   if(config.pixel_format == PIXFORMAT_JPEG){
     s->set_framesize(s, FRAMESIZE_QVGA);
   }
-
-  WiFi.begin(ssid, password);
-  WiFi.setSleep(false);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-
-  startCameraServer();
-
-  Serial.print("Camera Ready! Use 'http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("' to connect");
-
 }
 
-
+int count = 0;
+int begin_time = 0;
+int fps = 0;
 void loop() {
-  int time;
-
-  time = millis();
   camera_fb_t* fb = esp_camera_fb_get();
-  time = millis() - time;
-  Serial.printf("取照片时间: %dms\n", time);
-
-
-  time = millis();
-  TJpgDec.drawJpg(0, 0, fb->buf, fb->len);
-  time = millis() - time;
-  Serial.printf("解码时间: %dms\n", time);
-
+  TJpgDec.drawJpg(0, 20, fb->buf, fb->len);
   esp_camera_fb_return(fb);
+  count ++;
+
+  int end_time = millis();
+  if (end_time - begin_time >= 1000) {
+    fps = 1000 * count / (end_time - begin_time);
+
+    tft.setCursor(0, 0);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextSize(1);
+    tft.printf("FPS: %d", fps);
+
+    begin_time = millis();
+    count = 0;
+  }
+
 }
