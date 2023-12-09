@@ -35,8 +35,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char* ssid = "cwllll";
-const char* password = "18650807813";
+const char* ssid = "Xiaomi";
+const char* password = "87883222";
 
 void startCameraServer();
 void setupLedFlash(int pin);
