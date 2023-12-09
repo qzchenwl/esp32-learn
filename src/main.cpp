@@ -20,10 +20,15 @@ void setup() {
 
 int count = 0;
 void loop() {
+  int t1 = millis();
   camera_fb_t* fb = esp_camera_fb_get();
+  t1 = millis() - t1;
 
+  int t2 = millis();
   TJpgDec.drawJpg(0, 10, fb->buf, fb->len);
+  t2 = millis() - t2;
+
   esp_camera_fb_return(fb);
   tft.setCursor(0, 0);
-  tft.printf("w:%d h:%d c:%d", fb->width, fb->height, count++);
+  tft.printf("t1=%dms t2=%dms", t1, t2);
 }
