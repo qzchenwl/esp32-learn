@@ -6,6 +6,7 @@
 #include "my_screen.h"
 #include "my_lvgl.h"
 #include "my_camera.h"
+#include "my_wifi.h"
 
 // LVGL 显示刷新函数
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
@@ -30,9 +31,12 @@ void setup() {
   Serial.println("setup my camera ...");
   setup_my_camera();
 
-  Serial.println("setup lvgl ...");
+  Serial.println("setup my lvgl ...");
   setup_my_lvgl();
   my_lvgl_demo();
+
+  Serial.println("setup my wifi ...");
+  setup_my_wifi();
 }
 
 void loop() {
