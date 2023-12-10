@@ -1,4 +1,5 @@
 #include <TJpg_Decoder.h>
+#include <esp_camera.h>
 #include "my_screen.h"
 
 TFT_eSPI tft = TFT_eSPI();
@@ -29,4 +30,18 @@ void setup_my_screen() {
 
   TJpgDec.setJpgScale(1);
   TJpgDec.setCallback(tft_output);
+}
+
+void my_screen_loop() {
+  int t1 = millis();
+  camera_fb_t* fb = esp_camera_fb_get();
+  t1 = millis() - t1;
+
+  int t2 = millis();
+  TJpgDec.drawJpg(0, 80, fb->buf, fb->len);
+  t2 = millis() - t2;
+
+  esp_camera_fb_return(fb);
+  tft.setCursor(0, 0);
+  tft.printf("t1=%dms t2=%dms", t1, t2);
 }

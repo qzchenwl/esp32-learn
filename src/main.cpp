@@ -39,22 +39,31 @@ void setup() {
   setup_my_wifi();
 }
 
+int count = 0;
+int last_time = 0;
+int fps = 0;
 void loop() {
   lv_timer_handler();
-
-  int t1 = millis();
-  camera_fb_t* fb = esp_camera_fb_get();
-  t1 = millis() - t1;
-
-  int t2 = millis();
-  TJpgDec.drawJpg(0, 80, fb->buf, fb->len);
-  t2 = millis() - t2;
-
-  esp_camera_fb_return(fb);
-  tft.setCursor(0, 0);
-  tft.printf("t1=%dms t2=%dms", t1, t2);
-
+  my_screen_loop();
   my_wifi_loop();
 
   delay(5);
+
+  // 统计FPS
+  ++count;
+  int time_elapsed = millis() - last_time;
+  if (time_elapsed >= 1000) {
+    fps = count * 1000 / time_elapsed;
+
+    tft.setCursor(0, 118);
+    tft.printf("fps: %d", fps);
+    delay(1000);
+
+    last_time = millis();
+    count = 0;
+  } else {
+    tft.setCursor(0, 118);
+    tft.printf("fps: %d", fps);
+  }
+
 }
