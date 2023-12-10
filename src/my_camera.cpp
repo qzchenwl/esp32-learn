@@ -2,9 +2,9 @@
 #include <esp_camera.h>
 #include "my_camera.h"
 
-#define PWDN_GPIO_NUM     32
+#define PWDN_GPIO_NUM     -1
 #define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM      0
+#define XCLK_GPIO_NUM      12
 #define SIOD_GPIO_NUM     26
 #define SIOC_GPIO_NUM     27
 
