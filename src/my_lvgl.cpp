@@ -72,3 +72,7 @@ void my_lvgl_demo() {
   lv_obj_t *btn_label = lv_label_create(btn);
   lv_label_set_text(btn_label, "Click");
 }
+
+void my_lvgl_loop() {
+  lv_timer_handler();
+}
