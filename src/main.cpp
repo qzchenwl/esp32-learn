@@ -54,5 +54,7 @@ void loop() {
   tft.setCursor(0, 0);
   tft.printf("t1=%dms t2=%dms", t1, t2);
 
+  my_wifi_loop();
+
   delay(5);
 }
