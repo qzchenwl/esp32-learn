@@ -4,10 +4,14 @@
 #include "my_lvgl.h"
 #include "my_camera.h"
 #include "my_wifi.h"
+#include "my_expander.h"
 
 void setup() {
   Serial.begin(115200);
   Serial.println("setup ...");
+
+  Serial.println("setup my expander ...");
+//  setup_my_expander();
 
   Serial.println("setup my screen ...");
   setup_my_screen();

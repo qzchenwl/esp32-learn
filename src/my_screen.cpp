@@ -1,6 +1,7 @@
 #include <TJpg_Decoder.h>
 #include <esp_camera.h>
 #include "my_screen.h"
+#include "my_expander.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
