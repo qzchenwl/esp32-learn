@@ -4,11 +4,11 @@
 TFT_eSPI tft = TFT_eSPI();
 
 static void write_dc(uint8_t val) {
-  digitalWrite(32, val);
+  digitalWrite(3, val);
 }
 
 static void write_cs(uint8_t val) {
-  digitalWrite(4, val);
+  digitalWrite(15, val);
 }
 
 static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap){
@@ -18,8 +18,8 @@ static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* b
 }
 
 void setup_my_screen() {
-  pinMode(32, OUTPUT);
-  pinMode(4, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(15, OUTPUT);
 
   tft.init(write_dc, write_cs); // 初始化显示器
   tft.setSwapBytes(true);

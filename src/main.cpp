@@ -7,16 +7,30 @@
 #include "my_camera.h"
 #include "my_screen.h"
 
+
 void setup() {
   Serial.begin(115200);
   Serial.println("setup ...");
-
-  WiFi.begin("Xiaomi", "87883222");
-  WiFi.setSleep(false);
+  delay(2000);
+  Serial.print("Total heap: ");
+  Serial.println(ESP.getHeapSize());
+  Serial.print("Free heap: ");
+  Serial.println(ESP.getFreeHeap());
+  Serial.print("Min free heap: ");
+  Serial.println(ESP.getMinFreeHeap());
+  if(psramFound()){
+    Serial.println("PSRAM is found and initialized.");
+    Serial.print("PSRAM largest free block: ");
+    Serial.println(ESP.getMaxAllocPsram());
+  } else {
+    Serial.println("PSRAM is not found.");
+  }
+ WiFi.begin("Xiaomi", "87883222");
+WiFi.setSleep(false);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
+    Serial.print(WiFi.status());
   }
   Serial.println("");
   Serial.println("WiFi connected");
@@ -26,6 +40,7 @@ void setup() {
 
   Serial.println("setup my camera ...");
   setup_my_camera();
+
 
   delay(2000);
 }
@@ -39,10 +54,15 @@ void loop() {
   int t2 = millis();
   TJpgDec.drawJpg(0, 10, fb->buf, fb->len);
   t2 = millis() - t2;
-
-  String encodedImage = base64::encode(fb->buf, fb->len);
-
+  //print image base64
+  String image_base64 = base64::encode(fb->buf, fb->len);
   esp_camera_fb_return(fb);
   tft.setCursor(0, 0);
-  tft.printf("t1=%dms t2=%dms len=%d", t1, t2, encodedImage.length());
+  tft.printf("t1=%dms t2=%dms l=%d", t1, t2,image_base64.length());
+  Serial.print("PSRAM total: ");
+  Serial.println(ESP.getPsramSize());
+  Serial.print("PSRAM free: ");
+  Serial.println(ESP.getFreePsram());
+  Serial.print("PSRAM largest free block: ");
+  Serial.println(ESP.getMaxAllocPsram());
 }
