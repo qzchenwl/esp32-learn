@@ -11,7 +11,7 @@ void setup() {
   Serial.println("setup ...");
 
   Serial.println("setup my expander ...");
-//  setup_my_expander();
+  setup_my_expander();
 
   Serial.println("setup my screen ...");
   setup_my_screen();

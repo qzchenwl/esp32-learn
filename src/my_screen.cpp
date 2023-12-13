@@ -7,10 +7,12 @@ TFT_eSPI tft = TFT_eSPI();
 
 static void write_dc(uint8_t val) {
   digitalWrite(3, val);
+//  pcf8574.digitalWrite(P0, val);
 }
 
 static void write_cs(uint8_t val) {
   digitalWrite(15, val);
+//  pcf8574.digitalWrite(P1, val);
 }
 
 static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap){
