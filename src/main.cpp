@@ -6,6 +6,7 @@
 
 #include "my_camera.h"
 #include "my_screen.h"
+#include "my_i2s.h"
 
 
 void setup() {
@@ -25,6 +26,7 @@ void setup() {
   } else {
     Serial.println("PSRAM is not found.");
   }
+  setup_my_i2s();
  WiFi.begin("Xiaomi", "87883222");
 WiFi.setSleep(false);
 
@@ -59,10 +61,6 @@ void loop() {
   esp_camera_fb_return(fb);
   tft.setCursor(0, 0);
   tft.printf("t1=%dms t2=%dms l=%d", t1, t2,image_base64.length());
-  Serial.print("PSRAM total: ");
-  Serial.println(ESP.getPsramSize());
-  Serial.print("PSRAM free: ");
-  Serial.println(ESP.getFreePsram());
-  Serial.print("PSRAM largest free block: ");
-  Serial.println(ESP.getMaxAllocPsram());
+
+  my_i2s_loop();
 }
