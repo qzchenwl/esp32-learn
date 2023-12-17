@@ -9,9 +9,9 @@
 #include "Audio.h"
 
 // I2S Connections
-#define I2S_DOUT      27
-#define I2S_BCLK      26
-#define I2S_LRC       25
+#define I2S_DOUT      1
+#define I2S_BCLK      2
+#define I2S_LRC       17
 
 // Create Audio object
 Audio audio;
@@ -25,16 +25,6 @@ void setup() {
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
-
-    WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid.c_str(), password.c_str());
-    Serial.println("connecting to WIFI cwllll");
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.print(".");
-        delay(1000);
-    }
-    Serial.println("connected!");
 
     // Setup I2S
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
