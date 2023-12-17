@@ -6,7 +6,7 @@
 #define I2S_SCK 14
 
 // Use I2S Processor 0
-#define I2S_PORT I2S_NUM_0
+#define I2S_PORT I2S_NUM_1
 
 #define bufferLen 8
 int16_t sBuffer[bufferLen];
@@ -44,10 +44,10 @@ void my_i2s_loop() {
   // False print statements to "lock range" on serial plotter display
   // Change rangelimit value to adjust "sensitivity"
   int rangelimit = 3000;
-//  Serial.print(rangelimit * -1);
-//  Serial.print(" ");
-//  Serial.print(rangelimit);
-//  Serial.print(" ");
+  Serial.print(rangelimit * -1);
+  Serial.print(" ");
+  Serial.print(rangelimit);
+  Serial.print(" ");
 
   // Get I2S data and place in data buffer
   size_t bytesIn = 0;
@@ -67,7 +67,7 @@ void my_i2s_loop() {
       mean /= samples_read;
 
       // Print to serial plotter
-      //Serial.println(mean);
+      Serial.println(mean);
     }
   }
 }
