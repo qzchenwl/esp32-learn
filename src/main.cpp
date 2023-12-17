@@ -7,6 +7,7 @@
 #include "my_camera.h"
 #include "my_screen.h"
 #include "my_i2s.h"
+#include "my_i2s_2.h"
 
 
 void setup() {
@@ -19,16 +20,16 @@ void setup() {
   Serial.println(ESP.getFreeHeap());
   Serial.print("Min free heap: ");
   Serial.println(ESP.getMinFreeHeap());
-  if(psramFound()){
+  if (psramFound()) {
     Serial.println("PSRAM is found and initialized.");
     Serial.print("PSRAM largest free block: ");
     Serial.println(ESP.getMaxAllocPsram());
   } else {
     Serial.println("PSRAM is not found.");
   }
-  setup_my_i2s();
- WiFi.begin("Xiaomi", "87883222");
-WiFi.setSleep(false);
+//  setup_my_i2s();
+  WiFi.begin("Xiaomi", "87883222");
+  WiFi.setSleep(false);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -44,6 +45,8 @@ WiFi.setSleep(false);
   setup_my_camera();
 
 
+  setup_my_i2s_2();
+
   delay(2000);
 }
 
@@ -51,6 +54,8 @@ int count = 0;
 int fps = 0;
 int fss = 0;
 void loop() {
+  my_i2s_2_loop();
+
   int t1 = millis();
   // fps
   count++;
@@ -72,5 +77,5 @@ void loop() {
   esp_camera_fb_return(fb);
   tft.setCursor(0, 0);
   tft.printf("t1=%dms t2=%dms l=%d ", t1, t2, fss);
-  my_i2s_loop();
+//  my_i2s_loop();
 }
