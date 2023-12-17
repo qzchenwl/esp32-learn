@@ -48,8 +48,19 @@ WiFi.setSleep(false);
 }
 
 int count = 0;
+int fps = 0;
+int fss = 0;
 void loop() {
   int t1 = millis();
+  // fps
+  count++;
+  if (millis() - fps > 1000) {
+    fps = millis();
+    fss = count;
+    //Serial.printf("fps=%d\n", count);
+    count = 0;
+  }
+
   camera_fb_t* fb = esp_camera_fb_get();
   t1 = millis() - t1;
 
@@ -57,10 +68,9 @@ void loop() {
   TJpgDec.drawJpg(0, 10, fb->buf, fb->len);
   t2 = millis() - t2;
   //print image base64
-  String image_base64 = base64::encode(fb->buf, fb->len);
+  //String image_base64 = base64::encode(fb->buf, fb->len);
   esp_camera_fb_return(fb);
   tft.setCursor(0, 0);
-  tft.printf("t1=%dms t2=%dms l=%d", t1, t2,image_base64.length());
-
+  tft.printf("t1=%dms t2=%dms l=%d ", t1, t2, fss);
   my_i2s_loop();
 }
