@@ -1,6 +1,8 @@
 #include "SSEHTTPClient.h"
 
 int SSEHTTPClient::pollEventData(char* event, size_t len) {
+  std::optional<String> x;
+
   int ret = httpSseBuffer.pollEventData(event, len);
   if (ret != HTTPC_ERROR_SSE_INCOMPLETE) {
     return ret;
