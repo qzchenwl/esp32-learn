@@ -1,19 +1,21 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiClient.h>
-#include <HTTPClient.h>
+#include <M5Unified.h>
 
-#include "M5Unified.h"
-#include "SSEHTTPClient.h"
+#include "AudioOutputM5Speaker.h"
+#include "AudioFileSourceICYStream.h"
+#include "AudioFileSourceBuffer.h"
+#include "AudioGeneratorMP3.h"
 
-#define WIFI_SSID "cwllll iPhone"
-#define WIFI_PASS "12345678"
+#define WIFI_SSID "Xiaomi"
+#define WIFI_PASS "87883222"
 
+AudioGeneratorMP3 *mp3;
+AudioFileSourceICYStream *file;
+AudioFileSourceBuffer *buff;
+AudioOutputM5Speaker *out;
 
 void setup(void) {
-  USBSerial.begin(15200);
-  USBSerial.println("M5CoreS3 User Demo");
-
   M5.begin();
   M5.Display.setTextSize(2);
   M5.Display.println("M5CoreS3 User Demo");
@@ -30,42 +32,29 @@ void setup(void) {
   USBSerial.println("\nConnected!");
   M5.Display.println("\nConnected!");
 
-  WiFiClient client;
-  SSEHTTPClient http;
-  if (!http.begin(client, "http://172.20.10.9:8080/test-sse")) {
-    USBSerial.println("HTTPClient begin failed");
-    M5.Display.println("HTTPClient begin failed");
-    while(true) { delay(1000000); }
-  }
-  int httpStatusCode = http.GET();
-  if (httpStatusCode != HTTP_CODE_OK) {
-    USBSerial.printf("HTTPClient GET return %d\n", httpStatusCode);
-    M5.Display.printf("HTTPClient GET return %d\n", httpStatusCode);
-    while(true) { delay(1000000); }
-  }
+  M5.Speaker.begin();
+  M5.Speaker.setVolume(100);
 
-  while(true) {
-    int time = millis();
-    char eventData[1024];
-    int ret = http.pollEventData(eventData, sizeof(eventData));
-    if (ret == HTTPC_ERROR_SSE_INCOMPLETE) {
-      USBSerial.println("HTTPC_ERROR_INCOMPLETE_SSE");
-      delay(500);
-      continue;
-    } else if (ret == HTTPC_ERROR_SSE_EOF) {
-      USBSerial.println("OK");
-      return;
-    } else if (ret < 0) {
-      USBSerial.printf("pollEventData error: %d\n", ret);
-      return;
-    } else {
-      time = millis() - time;
-      USBSerial.printf("time: %d\n", time);
-      USBSerial.printf("RECEIVE: %s\n", eventData);
-    }
-  }
+  file = new AudioFileSourceICYStream("http://192.168.107.229:8081/static/a.mp3");
+  buff = new AudioFileSourceBuffer(file, 2048);
+  out = new AudioOutputM5Speaker(&M5.Speaker, 0);
+  mp3 = new AudioGeneratorMP3();
+  mp3->begin(buff, out);
 }
 
 void loop() {
+  static int lastms = 0;
+
+  if (mp3->isRunning()) {
+    if (millis()-lastms > 1000) {
+      lastms = millis();
+      USBSerial.printf("Running for %d ms...\n", lastms);
+      USBSerial.flush();
+    }
+    if (!mp3->loop()) mp3->stop();
+  } else {
+    USBSerial.printf("MP3 done\n");
+    delay(1000);
+  }
 }
 
